@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Sep 24 18:43:31 2021
-
 @author: User
 """
 
@@ -63,18 +62,23 @@ def allocate_z(size):
 
 def allocate(size):
     global current_list_size
+    real_size = 0
     for i in range(len(list_memory)):
-        if list_memory[i].index != 0 and list_memory[i].index - (list_memory[i-1].index + list_memory[i-1].size) >= size and current_list_size + size <= total_size:
-            list_memory.insert(list_memory[i-1].index + list_memory[i-1].size, a(list_memory[i-1].index + list_memory[i-1].size, size))
-            copy_list_memory.insert(copy_list_memory[i-1].index + copy_list_memory[i-1].size, a(copy_list_memory[i-1].index + list_memory[i-1].size, size))
+        if list_memory[i].index < 10:
+            real_size = size - 1
+        else:
+            real_size = size - 2
+        if list_memory[i].index != 0 and list_memory[i].index - (list_memory[i-1].index + list_memory[i-1].size) >= real_size and current_list_size + real_size <= total_size:
+            list_memory.insert(i, a(list_memory[i-1].index + list_memory[i-1].size, size))
+            #copy_list_memory.insert(copy_list_memory[i-1].index + copy_list_memory[i-1].size, a(copy_list_memory[i-1].index + list_memory[i-1].size, size))
             current_list_size += size
-            return list_memory[i-1].index + list_memory[i-1].size
-    if len(list_memory) == 0 and size < total_size and current_list_size + size <= total_size:
+            return list_memory[i-1].index + list_memory[i-1].index
+    if len(list_memory) == 0 and real_size < total_size and current_list_size + real_size <= total_size:
         list_memory.append(a(0, size))
         copy_list_memory.append(a(0, size))
         current_list_size += size
         return 0
-    elif total_size - (list_memory[-1].index + list_memory[-1].size) >= size and current_list_size + size <= total_size:
+    elif total_size - (list_memory[-1].index + list_memory[-1].size) >= real_size and current_list_size + real_size <= total_size:
         list_memory.append(a(list_memory[-1].index + list_memory[-1].size, size))
         copy_list_memory.append(a(copy_list_memory[-1].index + copy_list_memory[-1].size, size))
         current_list_size += size
@@ -83,9 +87,11 @@ def allocate(size):
         return "You can't add more elements"
 
 def free(index):
+    global current_list_size
     for i in range(len(list_memory)):
         if index == list_memory[i].index:
             free_memory.append(list_memory[i])
+            current_list_size -= list_memory[i].size
             del list_memory[i]
             return
 
@@ -101,16 +107,19 @@ def print_memory():
     l = 1 #count amount of raws
     local_size = 0
    # t = 0
+    isFull = False
     if len(list_memory) > 0:
         out_string += "|"
-        for i in range(len(list_memory)):
-            if contains(list_memory, copy_list_memory[i]) == True:
-                if copy_list_memory[i].index < 10 and k + 1 <= total_width*2:
-                    out_string += str(copy_list_memory[i].index)
+        i = 0
+        while i < len(list_memory):
+            
+            if list_memory[i].index == 0 or (list_memory[i].index - (list_memory[i-1].index + list_memory[i-1].size) == 0) or (list_memory[i].index - (list_memory[i-1].index + list_memory[i-1].size) > 0 and isFull):
+                if list_memory[i].index < 10 and k + 1 <= total_width*2:
+                    out_string += str(list_memory[i].index)
                     k += 1
                     local_size = 1
-                elif copy_list_memory[i].index >= 10 and k + 2 <= total_width*2:
-                    out_string += str(copy_list_memory[i].index)
+                elif list_memory[i].index >= 10 and k + 2 <= total_width*2:
+                    out_string += str(list_memory[i].index)
                     k += 2
                     local_size = 2
                 elif k == total_width*2:
@@ -122,7 +131,7 @@ def print_memory():
                     return "Error"
                 #printing "x"
                 
-                for j in range((copy_list_memory[i].size-local_size)*2):
+                for j in range(list_memory[i].size*2 - local_size):
                     if k + 1 <= total_width*2:
                         out_string += "x"
                         k += 1
@@ -134,29 +143,23 @@ def print_memory():
                         return "Error"
                     
                 #????? 
-                if k <= total_width*2:
+                if k < total_width*2:
                     out_string += "|"
                     k += 1
-                
-            elif contains(list_memory, copy_list_memory[i]) == False:
-                if copy_list_memory[i].index < 10 and k + 1 <= total_width*2:
-                    out_string += "-"
-                    k += 1
-                    local_size = 1
-                elif copy_list_memory[i].index >= 10 and k + 2 <= total_width*2:
-                    out_string += "--"
-                    k += 2
-                    local_size = 2
-                elif k == total_width*2:
-                    out_string += "|\n|"
-                    #???????
-                    k = 1
-                    l += 1
                 else:
-                    return "Error"
-                #printing "x"
+                    out_string += "|\n|"
+                    k = 1
+                isFull = False
                 
-                for j in range((copy_list_memory[i].size-local_size)*2):
+            elif list_memory[i].index != 0 and (list_memory[i].index - (list_memory[i-1].index + list_memory[i-1].size) > 0):
+                free_elem_index = list_memory[i-1].index + list_memory[i-1].size
+                size_difference = list_memory[i].index - free_elem_index
+                real_size_difference = 0
+                if free_elem_index < 10:
+                    real_size_difference = size_difference*2 - 1
+                else:
+                    real_size_difference = size_difference*2 - 2
+                for j in range(real_size_difference):
                     if k + 1 <= total_width*2:
                         out_string += "-"
                         k += 1
@@ -166,19 +169,25 @@ def print_memory():
                         l += 1
                     else:
                         return "Error"
+                
                     
                 #????? 
+                
                 if k <= total_width*2:
-                    if i < len(copy_list_memory)-1 and contains(list_memory, copy_list_memory[i+1]) == False:
+                    if i < len(list_memory)-1 and contains(list_memory, list_memory[i+1]) == False:
                         
                         out_string += "-"
                     else:
                         out_string += "|"
                     k += 1
+                isFull = True
                     
             else:
                 return "No such element"
-                
+            if isFull:
+                i += 0
+            else:
+                i += 1
             #printing spaces
             
         while l <= int(total_size / total_width):
@@ -208,6 +217,7 @@ def print_memory():
     
     print(out_string)
     
+    
 #isRunProgram = True
     
 def defineAction(userString):
@@ -231,9 +241,9 @@ def defineAction(userString):
        
         #userNumber = int(userString[-1])
         userNumber = int(userString.split(" ")[1])
-        if action == "allocate":
+        if action == "a":
             print(allocate(userNumber))
-        if action == "free":
+        if action == "f":
             free(userNumber)
     
 #print("Please set memory size:")
@@ -253,10 +263,10 @@ while True:
         break
     else:
         defineAction(userString)
-       
+    
         """
         print("\n")
         for i in range(len(list_memory)):
             print(list_memory[i].index, list_memory[i].size)
-            print(copy_list_memory[i].index, list_memory[i].size)
+            #print(copy_list_memory[i].index, list_memory[i].size)
             """
